@@ -9,7 +9,6 @@ import 'package:flutter_firebase_crud_app/screens/auth/auth_screen.dart';
 import 'package:flutter_firebase_crud_app/screens/map_view/map_view_screen.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:convex_bottom_bar/convex_bottom_bar.dart';
-import 'package:animated_text_kit/animated_text_kit.dart';
 
 class AdminScreen extends StatefulWidget {
   const AdminScreen({Key? key}) : super(key: key);
@@ -34,7 +33,7 @@ class _AdminScreenState extends State<AdminScreen> {
             SizedBox(width: 5),
             Text(
               'Admin',
-              style: TextStyle(color: Color.fromARGB(255, 145, 21, 21)),
+              style: TextStyle(color: Color.fromARGB(255, 124, 30, 1)),
             ),
           ],
         ),
