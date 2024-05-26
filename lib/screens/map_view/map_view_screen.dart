@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart'; 
+import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 
 class MapViewScreen extends StatefulWidget {
@@ -123,6 +123,7 @@ String _map = """
         <select id="chartType">
             <option value="bar">Biểu đồ cột</option>
             <option value="line">Biểu đồ đường</option>
+            <option value="doughnut">Biểu đồ tròn</option>
         </select>
     </div>
 
@@ -169,7 +170,7 @@ String _map = """
         chartTypeSelector.addEventListener('change', updateChart);
         getDistrictsFromFirestore();
 
-        let chart; // Biến để lưu trữ biểu đồ hiện tại
+        let chart; 
 
         async function getDistrictsFromFirestore() {
             const districts = new Set();
@@ -208,7 +209,7 @@ String _map = """
                     updateDistrictCount(totalRecords);
                     displayAllData();
                 });
-                map.setView([21.0285, 105.8542], 7);
+                map.setView([21.0285, 105.8542], 8);
             } else {
                 displayFilteredData(selectedDistrict, selectedTimeRange);
             }
@@ -262,16 +263,17 @@ String _map = """
         }
 
         function zoomToFilteredLocations(locations) {
-            let latSum = 0;
-            let longSum = 0;
-            locations.forEach(location => {
-                latSum += location.lat;
-                longSum += location.long;
-            });
-            const centerLat = latSum / locations.length;
-            const centerLong = longSum / locations.length;
-            map.setView([centerLat, centerLong], 16);
-        }
+            if (locations.length === 1) {
+                const singleLocation = locations[0];
+                map.setView([singleLocation.lat, singleLocation.long], 17); 
+            } else if (locations.length > 1) {
+                const bounds = L.latLngBounds(locations.map(location => [location.lat, location.long]));
+                
+                const center = bounds.getCenter();
+                map.setView(center, 12);
+            }
+        }   
+
 
         async function displayLandfillLocationsOnMap() {
             getDocs(landfillLocationsRef).then((querySnapshot) => {
@@ -294,57 +296,72 @@ String _map = """
     const timestamp = data.timestamp.toDate();
     const localTimestamp = new Date(timestamp.toLocaleString("en-US", { timeZone: "Asia/Ho_Chi_Minh" }));
     const formattedTime = localTimestamp.toLocaleString("en-US", { timeZone: "Asia/Ho_Chi_Minh" });
-    popupContent += `<b>Time:</b> \${formattedTime}<br>`;
+    popupContent += `<b>Thời gian:</b> \${formattedTime}<br>`;
     popupContent += '<img src="' + imageURL + '" style="max-width: 100px; max-height: 100px; display: block; margin: auto;" />';
-    popupContent += `<b>Waste_Level:</b> \${data.Waste_Level}<br>`;
-    popupContent += `<b>Describe:</b> \${data.Describe}<br>`;
+    popupContent += `<b>Lượng rác thải:</b> \${data.Waste_Level}<br>`;
+    popupContent += `<b>Mô tả:</b> \${data.Describe}<br>`;
     for (const key in data) {
-        if (data.hasOwnProperty(key) && key !== 'createById' && key !== 'Describe' && key !== 'Waste_Level' && key !== 'timestamp' && key !== 'Waste_type' && key !== 'Name' && key !== 'lat' && key !== 'long' && key !== 'imageURL' && key !== 'id') {
+        if (data.hasOwnProperty(key) && key !== 'createById' && key !== 'Describe' && key !== 'Waste_Level' && key !== 'timestamp' && key !== 'Name' && key !== 'lat' && key !== 'long' && key !== 'imageURL' && key !== 'id') {
             const value = data[key];
             if (typeof value === 'object') {
-                popupContent += '<b>Address:</b><br>';
+                popupContent += '<b>Địa chỉ:</b><br>';
                 for (const addressKey in value) {
                     if (value.hasOwnProperty(addressKey)) {
                         const addressValue = value[addressKey];
-                        popupContent += `<b>\${addressKey}:</b> \${addressValue}<br>`;
+                        // Hiển thị các trường địa chỉ bằng tiếng Việt
+                        if (addressKey === 'street') {
+                            popupContent += `<b>Đường:</b> \${addressValue}<br>`;
+                        } else if (addressKey === 'country') {
+                            popupContent += `<b>Quốc gia:</b> \${addressValue}<br>`;
+                        } else if (addressKey === 'city') {
+                            popupContent += `<b>Thành phố:</b> \${addressValue}<br>`;
+                        } else if (addressKey === 'district') {
+                            popupContent += `<b>Quận:</b> \${addressValue}<br>`;
+                        } 
                     }
                 }
             } else {
-                popupContent += `<b>\${key}:</b> \${value}<br>`;
+                if (key === 'Waste_Type') {
+                    popupContent += `<b>Loại rác:</b> \${value}<br>`;
+                } else {
+                    popupContent += `<b>\${key}:</b> \${value}<br>`;
+                }
             }
         }
     }
     const marker = L.marker([lat, long], { icon: createRedIcon() }).addTo(map).bindPopup(popupContent);
 }
 
-function displayLandfillLocationOnMap(lat, long, landfillData) {
+    function displayLandfillLocationOnMap(lat, long, landfillData) {
     const marker = L.marker([lat, long], { icon: createGreenIcon() }).addTo(map);
-    let popupContent = '<b>Landfill Location</b><br>';
+    let popupContent = '<b>Điểm tập kết rác thải</b><br>';
     for (const key in landfillData) {
         if (landfillData.hasOwnProperty(key) && key !== 'latitude' && key !== 'note' && key !== 'longitude') {
             const value = landfillData[key];
             if (key === 'timestamp') {
                 const timestamp = new Date(value.toMillis()).toLocaleString("en-US", { timeZone: "Asia/Ho_Chi_Minh" });
-                popupContent += `<b>\${key}:</b> \${timestamp}<br>`;
+                popupContent += `<b>Thời gian:</b> \${timestamp}<br>`;
+            } else if (key === 'address') {
+                popupContent += `<b>Địa chỉ:</b> \${value}<br>`;
             } else if (key === 'noteHistory') {
-                popupContent += `<b>\${key}:</b><br>`;
+                popupContent += `<b>Lịch sử bình luận:</b><br>`;
                 value.forEach((note, index) => {
-                    popupContent += `<b>Người sửa đổi thứ: \${index + 1}:</b><br>`;
-                    popupContent += `<b>editedBy:</b> \${note.editedBy}<br>`;
+                    popupContent += `<b>Bình luận thứ: \${index + 1}</b><br>`;
+                    popupContent += `<b>Từ người dùng:</b> \${note.editedBy}<br>`;
                     const editedTimestamp = new Date(note.editedTimestamp.toMillis()).toLocaleString("en-US", { timeZone: "Asia/Ho_Chi_Minh" });
-                    popupContent += `<b>editedTimestamp:</b> \${editedTimestamp}<br>`;
-                    popupContent += `<b>note:</b> \${note.note}<br>`;
+                    popupContent += `<b>Thời gian bình luận:</b> \${editedTimestamp}<br>`;
+                    popupContent += `<b>Lời bình luận:</b> \${note.note}<br>`;
                 });
             } else if (key === 'image_landfill') {
-                if (value) {
-                    popupContent += `<b>\${key}:</b><br>`;
-                    popupContent += `<img src="\${value}" style="max-width:100px; max-height:100px;"><br>`;
-                }
-            } else {
-                popupContent += `<b>\${key}:</b> \${value}<br>`;
-            }
-        }
-    }
+                  if (value) {
+                      popupContent += `<b>Ảnh địa điểm tập kết rác thải:</b><br>`;
+                      popupContent += `<img src="\${value}" style="max-width:100px; max-height:100px;"><br>`;
+                  }
+              } else {
+                  popupContent += `<b> \${key}:</b>\${value}<br>`;
+              }
+          }
+      }
     marker.bindPopup(popupContent).on('click', function (e) {
         this.openPopup();
     });
@@ -352,102 +369,99 @@ function displayLandfillLocationOnMap(lat, long, landfillData) {
 }
 
 
-        function createRedIcon() {
-    return L.divIcon({
-        className: 'custom-icon custom-icon-red',
-        iconSize: [10, 10], // Kích thước nhỏ hơn
-        iconAnchor: [6, 6], // Điều chỉnh anchor cho kích thước nhỏ hơn
-        popupAnchor: [0, -4]
+
+    function createRedIcon() {
+        return L.divIcon({
+            className: 'custom-icon custom-icon-red',
+            iconSize: [10, 10], 
+            iconAnchor: [6, 6],
+            popupAnchor: [0, -4]
+        });
+    }
+
+   function createGreenIcon() {
+    return L.icon({
+        iconUrl: 'https://compact-mystery-420806.web.app/assets/assets/waste.png', // đường dẫn đầy đủ tới tệp ảnh
+        iconSize: [16, 16], 
+        iconAnchor: [8, 8], 
+        popupAnchor: [0, -8] 
     });
 }
 
-function createGreenIcon() {
-    return L.divIcon({
-        className: 'custom-icon custom-icon-green',
-        iconSize: [16, 16], // Giữ nguyên kích thước
-        iconAnchor: [8, 8], // Điều chỉnh anchor cho kích thước giữ nguyên
-        popupAnchor: [0, -8]
-    });
-}
 
-        function updateDistrictCount(count) {
-            districtCount.textContent = ` (\${count} dữ liệu)`;
-        }
+    function updateDistrictCount(count) {
+        districtCount.textContent = ` (\${count} dữ liệu)`;
+    }
 
         // Trích xuất dữ liệu từ bảng "users"
-async function getDataForCharts() {
-    const querySnapshot = await getDocs(usersRef);
-    const data = {
-        oneDay: 0,
-        sevenDays: 0,
-        thirtyDays: 0,
-        all: querySnapshot.size
-    };
+    async function getDataForCharts() {
+        const querySnapshot = await getDocs(usersRef);
+        const data = {
+            oneDay: 0,
+            sevenDays: 0,
+            thirtyDays: 0,
+            all: querySnapshot.size
+        };
 
-    const currentDate = new Date();
-    const oneDayAgo = new Date(currentDate);
-    oneDayAgo.setDate(oneDayAgo.getDate() - 1);
-    const sevenDaysAgo = new Date(currentDate);
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-    const thirtyDaysAgo = new Date(currentDate);
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        const currentDate = new Date();
+        const oneDayAgo = new Date(currentDate);
+        oneDayAgo.setDate(oneDayAgo.getDate() - 1);
+        const sevenDaysAgo = new Date(currentDate);
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        const thirtyDaysAgo = new Date(currentDate);
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-    querySnapshot.forEach((doc) => {
-        const userData = doc.data();
-        const timestamp = userData.timestamp.toDate();
+        querySnapshot.forEach((doc) => {
+            const userData = doc.data();
+            const timestamp = userData.timestamp.toDate();
 
-        if (timestamp > oneDayAgo) {
-            data.oneDay++;
-        }
+            if (timestamp > oneDayAgo) {
+                data.oneDay++;
+            }
 
-        if (timestamp > sevenDaysAgo) {
-            data.sevenDays++;
-        }
+            if (timestamp > sevenDaysAgo) {
+                data.sevenDays++;
+            }
 
-        if (timestamp > thirtyDaysAgo) {
-            data.thirtyDays++;
-        }
-    });
+            if (timestamp > thirtyDaysAgo) {
+                data.thirtyDays++;
+            }
+        });
 
-    return data;
-}
+        return data;
+    }
 
 
-async function updateChart() {
+    async function updateChart() {
     const selectedChartType = chartTypeSelector.value;
     if (chart) {
-        chart.destroy(); // Xóa biểu đồ hiện tại nếu đã tồn tại
+        chart.destroy(); 
     }
 
     const data = await getDataForCharts();
 
     chart = createChart(selectedChartType, data);
-}
+}   
 
-// Tạo biểu đồ
 function createChart(chartType, data) {
     const labels = ['1 ngày trước', '7 ngày trước', '30 ngày trước', 'Tất cả'];
     const datasetData = [data.oneDay, data.sevenDays, data.thirtyDays, data.all];
+    const backgroundColors = [
+        'rgba(255, 99, 132, 0.6)',
+        'rgba(54, 162, 235, 0.6)',
+        'rgba(255, 206, 86, 0.6)',
+        'rgba(75, 192, 192, 0.6)'
+    ];
 
     return new Chart(chartCanvas, {
         type: chartType,
         data: {
             labels: labels,
             datasets: [{
-                label: 'Dữ liệu',
+                label: 'Số lượng',
                 data: datasetData,
-                backgroundColor: [
-                    'rgba(255, 99, 132, 0.2)',
-                    'rgba(54, 162, 235, 0.2)',
-                    'rgba(255, 206, 86, 0.2)',
-                    'rgba(75, 192, 192, 0.2)'
-                ],
-                borderColor: [
-                    'rgba(255, 99, 132, 1)',
-                    'rgba(54, 162, 235, 1)',
-                    'rgba(255, 206, 86, 1)',
-                    'rgba(75, 192, 192, 1)'
-                ],
+                backgroundColor: backgroundColors,
+                borderColor: backgroundColors.map(color => color.replace('0.6', '1')), // Set border colors
                 borderWidth: 1
             }]
         },
@@ -456,21 +470,52 @@ function createChart(chartType, data) {
                 y: {
                     beginAtZero: true
                 }
+            },
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Biểu đồ số lượng dữ liệu chưa được xử lí theo thời gian'
+                },
+                legend: {
+                    display: true,
+                    labels: {
+                        font: {
+                            size: 14
+                        },
+                        // Customize colors for legend labels
+                        generateLabels: function(chart) {
+                            const data = chart.data;
+                            if (data.labels.length && data.datasets.length) {
+                                return data.labels.map(function(label, i) {
+                                    return {
+                                        text: label,
+                                        fillStyle: backgroundColors[i] // Use background colors for labels
+                                    };
+                                });
+                            }
+                            return [];
+                        }
+                    }
+                }
             }
         }
     });
 }
 
-chartTypeSelector.addEventListener('change', updateChart);
+
+
+    chartTypeSelector.addEventListener('change', updateChart);
 
 
 
         displayLandfillLocationsOnMap();
         processDataAndDisplayOnMap();
+        updateChart();
 
     </script>
 </body>
 
 </html>
+
 
 """;

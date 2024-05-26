@@ -97,7 +97,6 @@ class _HomeScreenState extends State<HomeScreen> {
                     fontSize: 18,
                   ),
                 ),
-                const SizedBox(height: 10),
                 StreamBuilder(
                   stream: FirebaseFirestore.instance
                       .collection('notifications')
@@ -117,7 +116,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       );
                     }
                     return SizedBox(
-                      height: 150,
+                      height: 150, // Điều chỉnh chiều cao nếu cần thiết
                       child: PageView.builder(
                         itemCount: streamSnapshot.data!.docs.length,
                         itemBuilder: (BuildContext context, int index) {
@@ -127,31 +126,35 @@ class _HomeScreenState extends State<HomeScreen> {
                           DateTime timestamp = data['timestamp'].toDate();
                           String formattedTime = DateFormat('dd/MM/yyyy HH:mm')
                               .format(timestamp.toLocal());
-                          return Container(
-                            width: MediaQuery.of(context).size.width * 0.8,
-                            margin: const EdgeInsets.symmetric(horizontal: 10),
-                            child: Card(
-                              elevation: 3,
-                              child: Padding(
-                                padding: const EdgeInsets.all(10),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Thông báo: ${data['notification']}',
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 16,
+                          return SingleChildScrollView(
+                            child: Container(
+                              width: MediaQuery.of(context).size.width * 0.8,
+                              margin:
+                                  const EdgeInsets.symmetric(horizontal: 10),
+                              child: Card(
+                                elevation: 3,
+                                child: Padding(
+                                  padding: const EdgeInsets.all(10),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Thông báo: ${data['notification']}',
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16,
+                                        ),
                                       ),
-                                    ),
-                                    const SizedBox(height: 5),
-                                    Text(
-                                      'Thời gian: $formattedTime',
-                                      style: const TextStyle(
-                                        fontSize: 14,
+                                      const SizedBox(height: 5),
+                                      Text(
+                                        'Thời gian: $formattedTime',
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                        ),
                                       ),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
                               ),
                             ),

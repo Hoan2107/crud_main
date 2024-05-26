@@ -109,6 +109,7 @@ class _AuthScreenState extends State<AuthScreen> {
   var timestamp = Timestamp.now();
   String? errorPassword;
   String? errorUserName;
+  bool obscurePassword = true;
 
   @override
   void initState() {
@@ -148,7 +149,7 @@ class _AuthScreenState extends State<AuthScreen> {
         Expanded(
           child: SingleChildScrollView(
             child: Container(
-              padding: EdgeInsets.all(25),
+              padding: const EdgeInsets.all(25),
               child: Column(
                 children: [
                   TextField(
@@ -163,18 +164,34 @@ class _AuthScreenState extends State<AuthScreen> {
                   const SizedBox(
                     height: 10,
                   ),
-                  TextField(
-                    decoration: InputDecoration(
-                      hintText: "Mật khẩu",
-                      labelText: "Mật khẩu",
-                      errorText: errorPassword,
-                    ),
-                    obscureText: true,
-                    enableSuggestions: false,
-                    autocorrect: false,
-                    onChanged: (value) {
-                      authModel.password = value;
-                    },
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          decoration: InputDecoration(
+                            hintText: "Mật khẩu",
+                            labelText: "Mật khẩu",
+                            errorText: errorPassword,
+                          ),
+                          obscureText: obscurePassword,
+                          enableSuggestions: false,
+                          autocorrect: false,
+                          onChanged: (value) {
+                            authModel.password = value;
+                          },
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () {
+                          setState(() {
+                            obscurePassword = !obscurePassword;
+                          });
+                        },
+                        icon: Icon(obscurePassword
+                            ? Icons.visibility
+                            : Icons.visibility_off),
+                      ),
+                    ],
                   ),
                   isRegister
                       ? TextField(
@@ -183,7 +200,8 @@ class _AuthScreenState extends State<AuthScreen> {
                             labelText: "Đặt lại mật khẩu",
                             errorText: errorPassword,
                           ),
-                          obscureText: true,
+                          obscureText:
+                              obscurePassword, // Sử dụng trạng thái này cho cả hai trường
                           enableSuggestions: false,
                           autocorrect: false,
                           onChanged: (value) {
@@ -268,19 +286,19 @@ class _AuthScreenState extends State<AuthScreen> {
         if (loggedInUser.role == "admin") {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => AdminScreen()),
+            MaterialPageRoute(builder: (context) => const AdminScreen()),
           );
         } else {
           userLogin = loggedInUser;
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => HomeScreen()),
+            MaterialPageRoute(builder: (context) => const HomeScreen()),
           );
         }
       } else {
         final scaffold = ScaffoldMessenger.of(context);
         scaffold.showSnackBar(
-          SnackBar(
+          const SnackBar(
             content: Text('Tên người dùng hoặc mật khẩu không chính xác.'),
           ),
         );

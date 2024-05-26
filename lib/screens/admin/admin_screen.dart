@@ -9,7 +9,6 @@ import 'package:flutter_firebase_crud_app/screens/auth/auth_screen.dart';
 import 'package:flutter_firebase_crud_app/screens/map_view/map_view_screen.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:convex_bottom_bar/convex_bottom_bar.dart';
-import 'package:animated_text_kit/animated_text_kit.dart';
 
 class AdminScreen extends StatefulWidget {
   const AdminScreen({Key? key}) : super(key: key);
@@ -1852,11 +1851,11 @@ class _LandfillLocationScreenState extends State<LandfillLocationScreen> {
       });
 
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Landfill location updated successfully')));
+          content: Text('Đã cập nhật vị trí bãi rác thành công')));
     } catch (e) {
       print('Error updating landfill location: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Error updating landfill location')));
+          const SnackBar(content: Text('Lỗi cập nhật vị trí bãi rác')));
       setState(() {
         _isLoading = false;
       });
@@ -1868,7 +1867,7 @@ class _LandfillLocationScreenState extends State<LandfillLocationScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Note History'),
+          title: const Text('Lịch sử ghi chú'),
           content: SizedBox(
             width: double.maxFinite,
             child: noteHistory.isNotEmpty
@@ -1884,12 +1883,13 @@ class _LandfillLocationScreenState extends State<LandfillLocationScreen> {
                           DateFormat('dd/MM/yyyy HH:mm:ss')
                               .format(editedTimestamp);
                       return ListTile(
-                        title: Text('Edited by: ${historyItem['editedBy']}'),
+                        title: Text(
+                            'Thêm bởi người dùng: ${historyItem['editedBy']}'),
                         subtitle: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('Edited timestamp: $formattedTimestamp'),
-                            Text('Note: ${historyItem['note']}'),
+                            Text('Sửa dổi: $formattedTimestamp'),
+                            Text('Ghi chú: ${historyItem['note']}'),
                           ],
                         ),
                       );
