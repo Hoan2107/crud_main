@@ -33,7 +33,7 @@ class _AdminScreenState extends State<AdminScreen> {
             SizedBox(width: 5),
             Text(
               'Admin',
-              style: TextStyle(color: Color.fromARGB(255, 145, 21, 21)),
+              style: TextStyle(color: Color.fromARGB(255, 124, 30, 1)),
             ),
           ],
         ),
