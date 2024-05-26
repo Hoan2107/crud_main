@@ -381,7 +381,7 @@ String _map = """
 
    function createGreenIcon() {
     return L.icon({
-        iconUrl: 'https://compact-mystery-420806.web.app/assets/assets/waste.png', //
+        iconUrl: 'https://compact-mystery-420806.web.app/assets/assets/waste.png', //aa
         iconSize: [16, 16], 
         iconAnchor: [8, 8], 
         popupAnchor: [0, -8] 
